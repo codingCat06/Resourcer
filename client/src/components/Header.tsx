@@ -57,4 +57,60 @@ const Header: React.FC = () => {
                 {user?.is_admin && (
                   <div className="relative group">
                     <button className="text-gray-700 hover:text-gray-900 flex items-center">
-               
+                      관리자
+                      <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                      <div className="py-1">
+                        <Link
+                          to="/admin/contacts"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          문의 관리
+                        </Link>
+                        <Link
+                          to="/admin/posts"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          포스트 관리
+                        </Link>
+                        <Link
+                          to="/admin/users"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          사용자 관리
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <button
+                  onClick={handleLogout}
+                  className="text-gray-700 hover:text-gray-900"
+                >
+                  Logout
+                </button>
+              </>
+            ) : (
+              <>
+                <Link to="/login" className="text-gray-700 hover:text-gray-900">
+                  Login
+                </Link>
+                <Link
+                  to="/register"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  Register
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </div>
+    </header>
+  );
+};
+
+export default Header;
