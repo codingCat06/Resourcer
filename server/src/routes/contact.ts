@@ -15,29 +15,34 @@ interface AuthRequest extends express.Request {
 // Submit contact form
 router.post('/submit', async (req, res) => {
   try {
+    console.log('[CONTACT] Submit request received:', { body: req.body });
     const { name, email, subject, message } = req.body;
 
     if (!name || !email || !subject || !message) {
+      console.log('[CONTACT] Submit validation failed: Missing required fields');
       return res.status(400).json({ message: 'All fields are required' });
     }
 
     // Validate email format
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
+      console.log('[CONTACT] Submit validation failed: Invalid email format');
       return res.status(400).json({ message: 'Invalid email format' });
     }
 
     // Insert contact submission
+    console.log('[CONTACT] Inserting contact submission into database...');
     const [result] = await pool.execute(`
-      INSERT INTO contact_submissions (name, email, subject, message)
+      INSERT INTO contacts (name, email, subject, message)
       VALUES (?, ?, ?, ?)
     `, [name, email, subject, message]);
 
     const submissionId = (result as any).insertId;
+    console.log('[CONTACT] Contact submission inserted successfully:', { submissionId });
 
     // Log email notification (email functionality can be added later)
-    console.log(`새로운 문의 접수 - ID: ${submissionId}, 이름: ${name}, 이메일: ${email}, 유형: ${subject}`);
-    console.log(`문의 내용: ${message}`);
+    console.log(`[CONTACT] 새로운 문의 접수 - ID: ${submissionId}, 이름: ${name}, 이메일: ${email}, 유형: ${subject}`);
+    console.log(`[CONTACT] 문의 내용: ${message}`);
 
     res.status(201).json({
       message: '문의사항이 성공적으로 접수되었습니다. 빠른 시일 내에 답변드리겠습니다.',
@@ -45,7 +50,16 @@ router.post('/submit', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Contact submission error:', error);
+    console.error('[CONTACT] Submit error:', error);
+    if (error instanceof Error) {
+      console.error('[CONTACT] Error details:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+    } else {
+      console.error('[CONTACT] Error details:', error);
+    }
     res.status(500).json({ message: 'Internal server error' });
   }
 });
@@ -57,29 +71,39 @@ router.get('/admin/list', authenticateToken, async (req: AuthRequest, res) => {
       return res.status(403).json({ message: 'Admin access required' });
     }
 
-    const { status, page = 1, limit = 20 } = req.query;
-    const offset = (Number(page) - 1) * Number(limit);
+    const { status = 'all', page = '1', limit = '20' } = req.query;
+    
+    const pageNum = parseInt(page as string) || 1;
+    const limitNum = parseInt(limit as string) || 20;
+    const offset = (pageNum - 1) * limitNum;
+
+    console.log('[CONTACT] Query parameters:', { status, page, limit, offset });
 
     let whereClause = '';
-    let queryParams: any[] = [];
+    const queryParams: any[] = [];
 
     if (status && status !== 'all') {
       whereClause = 'WHERE status = ?';
       queryParams.push(status);
     }
 
-    const [contacts] = await pool.execute(`
-      SELECT cs.*, u.username as admin_username
-      FROM contact_submissions cs
-      LEFT JOIN users u ON cs.admin_user_id = u.id
-      ${whereClause}
-      ORDER BY cs.created_at DESC
-      LIMIT ? OFFSET ?
-    `, [...queryParams, Number(limit), offset]);
+    console.log('[CONTACT] SQL parameters:', { whereClause, queryParams, limitNum, offset });
 
-    // Get total count
+    // Add pagination parameters
+    const paginationParams = [...queryParams, limitNum, offset];
+    
+    const [contacts] = await pool.execute(`
+      SELECT c.*, u.username as admin_username
+      FROM contacts c
+      LEFT JOIN users u ON c.admin_id = u.id
+      ${whereClause}
+      ORDER BY c.created_at DESC
+      LIMIT ? OFFSET ?
+    `, paginationParams);
+
+    // Get total count - use the same where conditions but without pagination
     const [countResult] = await pool.execute(`
-      SELECT COUNT(*) as total FROM contact_submissions ${whereClause}
+      SELECT COUNT(*) as total FROM contacts ${whereClause}
     `, queryParams);
 
     const total = (countResult as any[])[0].total;
@@ -87,9 +111,9 @@ router.get('/admin/list', authenticateToken, async (req: AuthRequest, res) => {
     res.json({
       contacts,
       pagination: {
-        current: Number(page),
-        total: Math.ceil(total / Number(limit)),
-        limit: Number(limit),
+        current: pageNum,
+        total: Math.ceil(total / limitNum),
+        limit: limitNum,
         totalItems: total
       }
     });
@@ -100,7 +124,7 @@ router.get('/admin/list', authenticateToken, async (req: AuthRequest, res) => {
   }
 });
 
-// Update contact submission status (admin only)
+// Update contact submission (admin only)
 router.put('/admin/:id', authenticateToken, async (req: AuthRequest, res) => {
   try {
     if (!req.user?.isAdmin) {
@@ -111,10 +135,10 @@ router.put('/admin/:id', authenticateToken, async (req: AuthRequest, res) => {
     const { status, admin_notes } = req.body;
 
     await pool.execute(`
-      UPDATE contact_submissions 
-      SET status = ?, admin_notes = ?, admin_user_id = ?, updated_at = NOW()
+      UPDATE contacts 
+      SET status = ?, admin_notes = ?, admin_id = ?, admin_username = ?, updated_at = NOW()
       WHERE id = ?
-    `, [status, admin_notes || null, req.user.id, id]);
+    `, [status, admin_notes || null, req.user.id, req.user.email, id]);
 
     res.json({ message: 'Contact submission updated successfully' });
 
@@ -133,18 +157,18 @@ router.get('/admin/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     const { id } = req.params;
 
-    const [contacts] = await pool.execute(`
-      SELECT cs.*, u.username as admin_username
-      FROM contact_submissions cs
-      LEFT JOIN users u ON cs.admin_user_id = u.id
-      WHERE cs.id = ?
+    const [contact] = await pool.execute(`
+      SELECT c.*, u.username as admin_username
+      FROM contacts c
+      LEFT JOIN users u ON c.admin_id = u.id
+      WHERE c.id = ?
     `, [id]);
 
-    if ((contacts as any[]).length === 0) {
+    if ((contact as any[]).length === 0) {
       return res.status(404).json({ message: 'Contact submission not found' });
     }
 
-    res.json({ contact: (contacts as any[])[0] });
+    res.json({ contact: (contact as any[])[0] });
 
   } catch (error) {
     console.error('Get contact error:', error);

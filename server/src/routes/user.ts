@@ -8,7 +8,7 @@ interface AuthRequest extends express.Request {
   user?: {
     id: number;
     email: string;
-    isAdmin: boolean;
+    is_admin: boolean;
   };
 }
 

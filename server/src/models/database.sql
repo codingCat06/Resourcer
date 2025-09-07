@@ -15,6 +15,8 @@ CREATE TABLE users (
     subscription_type ENUM('free', 'pro') DEFAULT 'free',
     subscription_expires_at DATETIME,
     total_earnings DECIMAL(10, 2) DEFAULT 0.00,
+    is_active BOOLEAN DEFAULT TRUE,
+    last_login TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

@@ -54,7 +54,7 @@ const Header: React.FC = () => {
                 <Link to="/create-post" className="text-gray-700 hover:text-gray-900">
                   Create Post
                 </Link>
-                {user?.is_admin && (
+                {user?.isAdmin && (
                   <div className="relative group">
                     <button className="text-gray-700 hover:text-gray-900 flex items-center">
                       관리자
@@ -65,10 +65,10 @@ const Header: React.FC = () => {
                     <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
                       <div className="py-1">
                         <Link
-                          to="/admin/contacts"
+                          to="/admin/dashboard"
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
-                          문의 관리
+                          관리자 대시보드
                         </Link>
                         <Link
                           to="/admin/posts"
@@ -81,6 +81,12 @@ const Header: React.FC = () => {
                           className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                         >
                           사용자 관리
+                        </Link>
+                        <Link
+                          to="/admin/contacts"
+                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          문의 관리
                         </Link>
                       </div>
                     </div>

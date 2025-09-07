@@ -11,6 +11,9 @@ import CreatePost from './pages/CreatePost';
 import EditPost from './pages/EditPost';
 import PostView from './pages/PostView';
 import AdminContacts from './pages/AdminContacts';
+import AdminDashboard from './pages/AdminDashboard';
+import AdminPosts from './pages/AdminPosts';
+import AdminUsers from './pages/AdminUsers';
 import Help from './pages/Help';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -30,6 +33,10 @@ const App = () => {
             <Route path="/create-post" element={<CreatePost />} />
             <Route path="/edit-post/:id" element={<EditPost />} />
             <Route path="/post/:id" element={<PostView />} />
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="/admin/posts" element={<AdminPosts />} />
+            <Route path="/admin/users" element={<AdminUsers />} />
             <Route path="/admin/contacts" element={<AdminContacts />} />
             <Route path="/help" element={<Help />} />
             <Route path="/terms" element={<Terms />} />

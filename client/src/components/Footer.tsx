@@ -49,7 +49,14 @@ const Footer: React.FC = () => {
     setSubmitMessage('');
 
     try {
-      await contactAPI.submitContact(contactForm);
+      const submitData = {
+        name: user ? (user.fullName || user.username) : contactForm.name,
+        email: user ? user.email : contactForm.email,
+        subject: contactForm.subject,
+        message: contactForm.message
+      };
+      
+      await contactAPI.submitContact(submitData);
       setSubmitMessage('문의사항이 성공적으로 전송되었습니다. 빠른 시일 내에 답변드리겠습니다.');
       setContactForm({ name: '', email: '', subject: '', message: '' });
     } catch (error: any) {
@@ -172,46 +179,49 @@ const Footer: React.FC = () => {
               )}
 
               <form onSubmit={handleContactSubmit} className="space-y-4">
-                <div>
-                  <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
-                    이름 *
-                  </label>
-                  <input
-                    type="text"
-                    id="name"
-                    name="name"
-                    required
-                    value={contactForm.name}
-                    onChange={handleContactChange}
-                    disabled={!!user}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      user ? 'bg-gray-100 text-gray-600' : ''
-                    }`}
-                    placeholder="홍길동"
-                  />
-                  {user && (
-                    <p className="mt-1 text-xs text-gray-500">로그인된 계정 정보가 자동으로 입력되었습니다.</p>
-                  )}
-                </div>
+                {!user && (
+                  <>
+                    <div>
+                      <label htmlFor="name" className="block mb-1 text-sm font-medium text-gray-700">
+                        이름 *
+                      </label>
+                      <input
+                        type="text"
+                        id="name"
+                        name="name"
+                        required
+                        value={contactForm.name}
+                        onChange={handleContactChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="홍길동"
+                      />
+                    </div>
 
-                <div>
-                  <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
-                    이메일 *
-                  </label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    required
-                    value={contactForm.email}
-                    onChange={handleContactChange}
-                    disabled={!!user}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-                      user ? 'bg-gray-100 text-gray-600' : ''
-                    }`}
-                    placeholder="example@email.com"
-                  />
-                </div>
+                    <div>
+                      <label htmlFor="email" className="block mb-1 text-sm font-medium text-gray-700">
+                        이메일 *
+                      </label>
+                      <input
+                        type="email"
+                        id="email"
+                        name="email"
+                        required
+                        value={contactForm.email}
+                        onChange={handleContactChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="example@email.com"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {user && (
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                    <p className="text-sm text-blue-700">
+                      <strong>{user.fullName || user.username}</strong> ({user.email})로 문의를 전송합니다.
+                    </p>
+                  </div>
+                )}
 
                 <div>
                   <label htmlFor="subject" className="block mb-1 text-sm font-medium text-gray-700">

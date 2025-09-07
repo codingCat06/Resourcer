@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { User, Post, SearchQuery } from '../types';
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5001/api';
+const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -124,6 +124,67 @@ export const contactAPI = {
     admin_notes?: string;
   }) => {
     const response = await api.put(`/contact/admin/${id}`, data);
+    return response.data;
+  },
+};
+
+// Admin API
+export const adminAPI = {
+  getStats: async () => {
+    const response = await api.get('/admin/stats');
+    return response.data;
+  },
+
+  processEarnings: async () => {
+    const response = await api.post('/admin/process-earnings');
+    return response.data;
+  },
+
+  getUsers: async (params?: {
+    subscription_type?: string;
+    is_active?: boolean;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const response = await api.get('/admin/users', { params });
+    return response.data;
+  },
+
+  getAllPosts: async (params?: {
+    status?: string;
+    sortBy?: string;
+    sortOrder?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const response = await api.get('/admin/posts', { params });
+    return response.data;
+  },
+
+  updatePostStatus: async (id: number, status: string) => {
+    const response = await api.put(`/admin/posts/${id}/status`, { status });
+    return response.data;
+  },
+
+  deletePost: async (id: number) => {
+    const response = await api.delete(`/admin/posts/${id}`);
+    return response.data;
+  },
+
+  updateUserSubscription: async (id: number, subscription_type: string) => {
+    const response = await api.put(`/admin/users/${id}/subscription`, { subscription_type });
+    return response.data;
+  },
+
+  updateUserStatus: async (id: number, is_active: boolean) => {
+    const response = await api.put(`/admin/users/${id}/status`, { is_active });
+    return response.data;
+  },
+
+  updateUserAdminStatus: async (id: number, is_admin: boolean) => {
+    const response = await api.put(`/admin/users/${id}/admin`, { is_admin });
     return response.data;
   },
 };
