@@ -32,7 +32,7 @@ router.post('/submit', async (req, res) => {
 
     // Insert contact submission
     console.log('[CONTACT] Inserting contact submission into database...');
-    const [result] = await pool.execute(`
+    const [result] = await pool.query(`
       INSERT INTO contacts (name, email, subject, message)
       VALUES (?, ?, ?, ?)
     `, [name, email, subject, message]);
@@ -91,8 +91,8 @@ router.get('/admin/list', authenticateToken, async (req: AuthRequest, res) => {
 
     // Add pagination parameters
     const paginationParams = [...queryParams, limitNum, offset];
-    
-    const [contacts] = await pool.execute(`
+
+    const [contacts] = await pool.query(`
       SELECT c.*, u.username as admin_username
       FROM contacts c
       LEFT JOIN users u ON c.admin_id = u.id
@@ -102,7 +102,7 @@ router.get('/admin/list', authenticateToken, async (req: AuthRequest, res) => {
     `, paginationParams);
 
     // Get total count - use the same where conditions but without pagination
-    const [countResult] = await pool.execute(`
+    const [countResult] = await pool.query(`
       SELECT COUNT(*) as total FROM contacts ${whereClause}
     `, queryParams);
 
@@ -134,7 +134,7 @@ router.put('/admin/:id', authenticateToken, async (req: AuthRequest, res) => {
     const { id } = req.params;
     const { status, admin_notes } = req.body;
 
-    await pool.execute(`
+    await pool.query(`
       UPDATE contacts 
       SET status = ?, admin_notes = ?, admin_id = ?, admin_username = ?, updated_at = NOW()
       WHERE id = ?
@@ -157,7 +157,7 @@ router.get('/admin/:id', authenticateToken, async (req: AuthRequest, res) => {
 
     const { id } = req.params;
 
-    const [contact] = await pool.execute(`
+    const [contact] = await pool.query(`
       SELECT c.*, u.username as admin_username
       FROM contacts c
       LEFT JOIN users u ON c.admin_id = u.id

@@ -103,9 +103,6 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
     const limitNum = parseInt(limit as string) || 20;
     const offset = (pageNum - 1) * limitNum;
     
-    // Add pagination parameters at the end
-    params.push(limitNum, offset);
-    
     console.log('Admin users query params:', params);
     console.log('Admin users where clause:', whereClause);
     
@@ -120,8 +117,15 @@ router.get('/users', authenticateToken, requireAdmin, async (req, res) => {
       ORDER BY ${safeSortBy} ${safeSortOrder}
       LIMIT ? OFFSET ?
     `;
+
     
-    const [users] = await pool.execute(query, params);
+    // Add pagination parameters at the end after building the query
+    params.push(limitNum, offset);
+
+    console.log('params', params)
+    
+    const [users] = await pool.query(query, params);
+
 
     // Ensure numeric fields are properly typed
     const processedUsers = (users as any[]).map(user => ({
@@ -148,7 +152,7 @@ router.put('/posts/:id/status', authenticateToken, requireAdmin, async (req, res
       return res.status(400).json({ message: 'Invalid status' });
     }
 
-    await pool.execute('UPDATE posts SET status = ? WHERE id = ?', [status, id]);
+    await pool.query('UPDATE posts SET status = ? WHERE id = ?', [status, id]);
 
     res.json({ message: 'Post status updated successfully' });
   } catch (error) {
@@ -191,7 +195,7 @@ router.get('/posts', authenticateToken, requireAdmin, async (req, res) => {
       LIMIT ? OFFSET ?
     `;
     
-    const [posts] = await pool.execute(query, params);
+    const [posts] = await pool.query(query, params);
 
     // Ensure numeric fields are properly typed
     const processedPosts = (posts as any[]).map(post => ({
@@ -213,11 +217,11 @@ router.delete('/posts/:id', authenticateToken, requireAdmin, async (req, res) =>
     const { id } = req.params;
 
     // Delete related records first
-    await pool.execute('DELETE FROM post_clicks WHERE post_id = ?', [id]);
-    await pool.execute('DELETE FROM earnings WHERE post_id = ?', [id]);
-    
+    await pool.query('DELETE FROM post_clicks WHERE post_id = ?', [id]);
+    await pool.query('DELETE FROM earnings WHERE post_id = ?', [id]);
+
     // Delete the post
-    const [result] = await pool.execute('DELETE FROM posts WHERE id = ?', [id]);
+    const [result] = await pool.query('DELETE FROM posts WHERE id = ?', [id]);
 
     if ((result as any).affectedRows === 0) {
       return res.status(404).json({ message: 'Post not found' });
@@ -240,7 +244,7 @@ router.put('/users/:id/subscription', authenticateToken, requireAdmin, async (re
       return res.status(400).json({ message: 'Invalid subscription type' });
     }
 
-    await pool.execute('UPDATE users SET subscription_type = ? WHERE id = ?', [subscription_type, id]);
+    await pool.query('UPDATE users SET subscription_type = ? WHERE id = ?', [subscription_type, id]);
 
     res.json({ message: 'User subscription updated successfully' });
   } catch (error) {
@@ -260,7 +264,7 @@ router.put('/users/:id/status', authenticateToken, requireAdmin, async (req, res
       return res.status(400).json({ message: 'is_active must be a boolean' });
     }
 
-    const [result] = await pool.execute('UPDATE users SET is_active = ? WHERE id = ?', [is_active ? 1 : 0, id]);
+    const [result] = await pool.query('UPDATE users SET is_active = ? WHERE id = ?', [is_active ? 1 : 0, id]);
 
     if ((result as any).affectedRows === 0) {
       return res.status(404).json({ message: 'User not found' });
@@ -289,7 +293,7 @@ router.put('/users/:id/admin', authenticateToken, requireAdmin, async (req: Auth
       return res.status(400).json({ message: 'Cannot remove your own admin privileges' });
     }
 
-    const [result] = await pool.execute('UPDATE users SET is_admin = ? WHERE id = ?', [is_admin ? 1 : 0, id]);
+    const [result] = await pool.query('UPDATE users SET is_admin = ? WHERE id = ?', [is_admin ? 1 : 0, id]);
 
     if ((result as any).affectedRows === 0) {
       return res.status(404).json({ message: 'User not found' });

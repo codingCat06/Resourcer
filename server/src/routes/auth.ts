@@ -4,7 +4,6 @@ import jwt from 'jsonwebtoken';
 import pool from '../models/db';
 
 const router = express.Router();
-console.log('[AUTH] Auth routes initialized');
 // Register
 router.post('/register', async (req, res) => {
   try {
@@ -37,6 +36,7 @@ router.post('/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, saltRounds);
     console.log('[AUTH] Password hashed successfully');
 
+    
     // Insert new user
     console.log('[AUTH] Inserting new user into database...');
     console.log('[AUTH] User data:', { username, email, fullName: fullName || null });
